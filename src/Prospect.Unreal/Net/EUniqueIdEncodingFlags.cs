@@ -1,7 +1,7 @@
 ﻿namespace Prospect.Unreal.Net;
 
 [Flags]
-public enum EUniqueIdEncodingFlags
+public enum EUniqueIdEncodingFlags : byte
 {
     /** Default, nothing encoded, use normal FString serialization */
     NotEncoded = 0,
@@ -9,8 +9,8 @@ public enum EUniqueIdEncodingFlags
     IsEncoded = (1 << 0),
     /** This unique id is empty or invalid, nothing further to serialize */
     IsEmpty = (1 << 1),
-    /** Reserved for future use */
-    Unused1 = (1 << 2),
+    /** Original data is padded with a leading zero */
+    IsPadded = (1 << 2),
     /** Remaining bits are used for encoding the type without requiring another byte */
     Reserved1 = (1 << 3),
     Reserved2 = (1 << 4),

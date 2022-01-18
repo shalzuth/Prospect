@@ -76,4 +76,6 @@ public class UObjectBaseUtility : UObjectBase
         
         return IsChildOfWorkaround(thisClass, someBaseClass);
     }
+
+    public static UClass StaticClass() { return new UClass(); }
 }

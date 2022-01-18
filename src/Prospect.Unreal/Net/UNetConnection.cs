@@ -3,7 +3,9 @@ using System.Net.Sockets;
 using Prospect.Unreal.Core;
 using Prospect.Unreal.Core.Names;
 using Prospect.Unreal.Exceptions;
+using Prospect.Unreal.Net.Actors;
 using Prospect.Unreal.Net.Channels;
+using Prospect.Unreal.Net.Channels.Actor;
 using Prospect.Unreal.Net.Packets.Bunch;
 using Prospect.Unreal.Net.Packets.Control;
 using Prospect.Unreal.Net.Packets.Header;
@@ -86,6 +88,9 @@ public abstract class UNetConnection : UPlayer
     private bool _bAutoFlush;
 
     private readonly HandlePacketNotification _packetNotifyUpdateDelegate;
+
+    Dictionary<AActor, UActorChannel> ActorChannels { get; set; } = new Dictionary<AActor, UActorChannel>();
+    UReplicationConnectionDriver ReplicationConnectionDriver { get; set; }
 
     public UNetConnection()
     {
@@ -769,7 +774,19 @@ public abstract class UNetConnection : UPlayer
 
                 if (bunch.bHasPackageMapExports)
                 {
-                    throw new NotImplementedException();
+                    //Driver.NetGUIDInBytes += (bunchDataBits + (headerPos - incomingStartPos)) >> 3;
+
+                    if (IsInternalAck())
+                    {
+                        // NOTE - For replays, we do this even earlier, to try and load this as soon as possible, in case there is an issue creating the channel
+                        // If a replay fails to create a channel, we want to salvage as much as possible
+                        //Cast<UPackageMapClient>(PackageMap)->ReceiveNetGUIDBunch(Bunch);
+
+                        if (bunch.IsError())
+                        {
+                            //UE_LOG(LogNetTraffic, Error, TEXT("UNetConnection::ReceivedPacket: Bunch.IsError() after ReceiveNetGUIDBunch. ChIndex: %i"), Bunch.ChIndex);
+                        }
+                    }
                 }
 
                 if (bunch.bReliable)
@@ -1042,7 +1059,12 @@ public abstract class UNetConnection : UPlayer
 
         if (!Driver!.IsServer())
         {
-            throw new NotImplementedException("Client code");
+            if (bHasServerFrameTime)
+            {
+                byte FrameTimeByte = reader.ReadByte();
+                // As a client, our request was granted, read the frame time
+                serverFrameTime = (double)FrameTimeByte / 1000;
+            }
         }
         else
         {
@@ -1756,5 +1778,13 @@ public abstract class UNetConnection : UPlayer
     private static int MakeRelative(int value, int reference, int max)
     {
         return reference + BestSignedDifference(value, reference, max);
+    }
+    public void AddActorChannel(AActor Actor, UActorChannel Channel)
+    {
+        ActorChannels.Add(Actor, Channel);
+        if (ReplicationConnectionDriver != null)
+        {
+            ReplicationConnectionDriver.NotifyActorChannelAdded(Actor, Channel);
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 public class UChildConnection : UNetConnection
 {
+    public UNetConnection? Parent { get; set; }
     public override void LowLevelSend(byte[] data, int countBits, FOutPacketTraits traits)
     {
         throw new NotImplementedException();

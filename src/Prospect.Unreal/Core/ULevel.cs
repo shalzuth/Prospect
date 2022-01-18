@@ -32,4 +32,6 @@ public class ULevel : UObject
     {
         throw new NotImplementedException();
     }
+
+    public UWorld GetWorld() { return OwningWorld; }
 }

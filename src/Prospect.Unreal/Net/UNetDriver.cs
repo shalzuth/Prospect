@@ -141,7 +141,10 @@ public abstract class UNetDriver : IAsyncDisposable
         {
             // TODO: (When actors are implemented) ServerReplicateActors
         }
-
+        if (ServerConnection != null)
+        {
+            ServerConnection.Tick(deltaTime);
+        }
         foreach (var connection in ClientConnections)
         {
             connection.Tick(deltaTime);
@@ -232,7 +235,7 @@ public abstract class UNetDriver : IAsyncDisposable
     {
         foreach (var channelDef in ChannelDefinitions)
         {
-            if (channelDef.InitialServer)
+            if (channelDef.InitialClient)
             {
                 ServerConnection.CreateChannelByName(channelDef.Name, EChannelCreateFlags.OpenedLocally, channelDef.StaticChannelIndex);
             }
@@ -268,6 +271,8 @@ public abstract class UNetDriver : IAsyncDisposable
             _ => throw new UnrealNetException($"Attempted to create unknown channel {chName}")
         };
     }
+
+    public UWorld? GetWorld() { return World; }
 
     public virtual ValueTask DisposeAsync()
     {

@@ -120,6 +120,7 @@ public abstract partial class UWorld : FNetworkNotify, IAsyncDisposable
     
     public bool SetGameMode(FUrl worldUrl)
     {
+        Url = worldUrl;
         if (IsServer() && _authorityGameMode == null)
         {
             _authorityGameMode = GetGameInstance().CreateGameModeForURL(worldUrl, this);
@@ -270,7 +271,7 @@ public abstract partial class UWorld : FNetworkNotify, IAsyncDisposable
             {
                 case NMT.Hello:
                 {
-                    const int localNetworkVersion = 0;
+                    var localNetworkVersion = FNetworkVersion.GetLocalNetworkVersion();
                     
                     if (NMT_Hello.Receive(bunch, out var isLittleEndian, out var remoteNetworkVersion, out var encryptionToken))
                     {

@@ -123,6 +123,7 @@ public abstract class UChannel
     ///     Incoming data with queued dependencies.
     /// </summary>
     public FInBunch? InRec { get; set; }
+    public Dictionary<int, FInBunch> InRecs { get; set; } = new Dictionary<int, FInBunch>();
 
     /// <summary>
     ///     Outgoing reliable unacked data.
@@ -163,7 +164,7 @@ public abstract class UChannel
         // If a replay fails to create a channel, we want to salvage as much as possible
         if (bunch.bHasPackageMapExports && !Connection!.IsInternalAck())
         {
-            throw new NotImplementedException();
+            ((UPackageMapClient?)Connection.PackageMap)?.ReceiveNetGUIDBunch(bunch);
         }
 
         if (Connection!.IsInternalAck() && Broken)
@@ -183,8 +184,8 @@ public abstract class UChannel
                 throw new UnrealNetException("Invalid bunch");
             }
 
-            // TODO: (InRec) Queue
-            throw new NotImplementedException();
+            Logger.Information("Queuing bunch with unreceived dependency: %d / %d", bunch.ChSequence, Connection.InReliable[ChIndex] + 1);
+            InRecs[bunch.ChSequence] = bunch;
         }
         else
         {
@@ -200,7 +201,14 @@ public abstract class UChannel
             {
                 return;
             }
-            
+
+            var chSeqs = InRecs.Where(k=>k.Key == bunch.ChSequence).OrderBy(b => b.Key).Select(b => b.Key);
+            foreach (var chSeq in chSeqs)
+            {
+                var queuedBunch = InRecs[chSeq];
+                InRecs.Remove(chSeq);
+                if (ReceivedNextBunch(queuedBunch, out _)) return;
+            }
             // TODO: (InRec) Dispatch waiting bunches
             while (InRec != null)
             {
@@ -541,7 +549,7 @@ public abstract class UChannel
         // Set bunch flags.
         var bDormancyClose = bunch.bClose && (bunch.CloseReason == EChannelCloseReason.Dormancy);
 
-        if (OpenedLocally && ((OpenPacketId.First == UnrealConstants.IndexNone) || ((Connection.ResendAllDataState == EResendAllDataState.None) && !bDormancyClose)))
+        if (OpenedLocally && ((OpenPacketId.First == UnrealConstants.IndexNone) || ((Connection.ResendAllDataState != EResendAllDataState.None) && !bDormancyClose)))
         {
             var bOpenBunch = true;
 

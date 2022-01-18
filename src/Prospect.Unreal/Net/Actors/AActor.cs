@@ -1,5 +1,7 @@
 ﻿using Prospect.Unreal.Core;
+using Prospect.Unreal.Core.Math;
 using Prospect.Unreal.Core.Objects;
+using Prospect.Unreal.Net.Packets.Bunch;
 using Prospect.Unreal.Runtime;
 
 namespace Prospect.Unreal.Net.Actors;
@@ -80,5 +82,27 @@ public class AActor : UObject
     public bool IsActorInitialized()
     {
         return bActorInitialized;
+    }
+
+    public UChildActorComponent? GetParentComponent() { return null; }
+    public USceneComponent? GetRootComponent() { return null; }
+    public FVector? GetActorLocation() { return null; }
+    public FRotator? GetActorRotation() { return null; }
+    public FVector? GetActorScale() { return null; }
+    public FVector? GetVelocity() { return null; }
+    public void PostNetReceiveVelocity(FVector velocity) { }
+    public void SetActorScale3D(FVector scale) { }
+    public UNetConnection? GetNetConnection() { return null; }// Owner ? Owner->GetNetConnection() : nullptr; }
+    public void PostNetInit() { }
+    public virtual void OnActorChannelOpen(FInBunch bunch, UNetConnection? connect) { }
+    public ENetDormancy NetDormancy { get; set; }
+    public enum ENetDormancy
+    {
+        DORM_Never, // This actor can never go network dormant.
+        DORM_Awake, // This actor can go dormant, but is not currently dormant. Game code will tell it when it go dormant.
+        DORM_DormantAll, // This actor wants to go fully dormant for all connections.
+        DORM_DormantPartial, // This actor may want to go dormant for some connections, GetNetDormancy() will be called to find out which.
+        DORM_Initial, // This actor is initially dormant for all connection if it was placed in map.
+        DORM_MAX
     }
 }

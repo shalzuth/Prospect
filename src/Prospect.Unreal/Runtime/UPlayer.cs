@@ -2,7 +2,7 @@
 
 namespace Prospect.Unreal.Runtime;
 
-public class UPlayer
+public class UPlayer : AActor
 {
     public APlayerController? PlayerController { get; set; }
     
